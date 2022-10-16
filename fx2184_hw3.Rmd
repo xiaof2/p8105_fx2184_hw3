@@ -207,6 +207,7 @@ plot1= ny_noaa %>%
         theme(plot.title = element_text(size = 12)) +
         theme(axis.title = element_text(size = 10)) +
         theme(axis.text = element_text(size = 10)) 
+plot1
 ```
 
 ```{r}
@@ -218,6 +219,7 @@ plot2 = ny_noaa %>%
   geom_density_ridges(alpha=0.8)+
   ggtitle('The distribution of snowfall values between 0 and 100 by year')+
   theme(legend.position = "bottom")
+plot2
 ```
 
 #patch work 
