@@ -11,7 +11,7 @@ library(tidyverse)
 library(readr)
 library(devtools)
 ```
-```
+
 # problem1 
 
 ```{r}
@@ -21,6 +21,131 @@ instacart_df = instacart  %>%
         as_tibble(instacart)
 # giving illstrative examples of first 10 observations
 head(instacart_df, 10)
-```
+``` 
 * the instacart dataset has `r nrow(instacart_df)` observations, and `r ncol(instacart_df)` variables, they are `r names(instacart_df)`. 
 * In total, there are `r instacart %>% select(product_id) %>% distinct %>% count` products found in `r instacart %>% select(user_id, order_id) %>% distinct %>% count` orders from `r instacart %>% select(user_id) %>% distinct %>% count` distinct users.
+
+```{r warning=FALSE}
+# How many aisles are there, and which aisles are the most items ordered from?
+n_aisles= instacart_df %>%
+  group_by(aisle_id,aisle) %>% 
+  distinct() %>% 
+  summarize(n_order = n()) %>% 
+  arrange(desc(n_order)) %>% 
+  ungroup()
+
+# Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered.
+n_aisles %>%
+  filter(n_order >10000) %>% 
+  ggplot(aes(x =n_order, y=aisle, fill = aisle))+
+  geom_bar(
+    stat = "identity"
+  )  +
+  labs(
+    title = 'Number of Items Ordered in Each Aisle',
+    caption = 'Aisles with more than 10000 items ordered',
+    x = ' Number of items',
+    y = ' Aisle'
+  ) + theme(legend.position = "topright") 
+```
+* There are `r nrow(n_aisles)` aisles are there, and the most ites ordered from `fresh vegetables`. 
+* The plot shows the number of items ordered in each aisle. 
+
+```{r warning=FALSE}
+# Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+
+instacart_df %>% 
+  filter(aisle == c("dog food care", "packaged vegetables fruits","baking ingredients")) %>%              
+  group_by(aisle, product_name) %>% 
+  summarize(n_order = n()) %>% 
+  arrange(desc(n_order)) %>% 
+  do(head(.,n =3)) %>% 
+  knitr::kable(
+    caption = "Three Most Popular Items in each of the aisles")
+```
+
+```{r warning=FALSE}
+# Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+instacart_df %>% 
+  filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name,order_dow) %>% 
+  summarize( mean_hour_of_day = mean(order_hour_of_day)) %>% 
+  mutate(order_dow = recode(order_dow,
+                            "0" = "Monday",
+                            "1" = "Tuesday",
+                            "2" = "Wednesday", 
+                            "3" = "Thursday", 
+                            "4" = "Friday", 
+                            "5" = "Saturday", 
+                            "6" = "Sunday"
+  )) %>% 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour_of_day) %>% 
+  knitr::kable(
+    digits = 2,
+    caption = "Mean Hour of the Day")
+```
+
+# problem 2 
+
+Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+
+```{r}
+# tidy the dataset 
+accel<- read_csv("accel_data.csv") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    activity_1:activity_1440, 
+    names_to = "minute",
+    values_to = "activity",
+    names_prefix = "activity_", 
+  ) %>% 
+  mutate(
+    day_of_week = recode(day,
+                         "Monday" = "Weekday", 
+                         "Tuesday" = "Weekday", 
+                         "Wednesday" = "Weekday", 
+                         "Thursday" = "Weekday", 
+                         "Friday" = "Weekday", 
+                         "Saturday" = "Weekend", 
+                         "Sunday" = "Weekend"))
+```
+* The dataset `accel` contains `r nrow(accel)` observations, and  `r ncol(accel)` varibles, which are `r names(accel)`. 
+* Each observation represent a male subject's activity count per minute of each day during five weeks.
+
+#aggregate across minutes 
+```{r}
+#aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+accel %>% 
+  group_by(week,day) %>% 
+  summarize(total_activity=sum(activity)) %>% 
+  spread(key= day, total_activity) %>% 
+  select("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday") %>% 
+  knitr::kable(digits = 0,
+    catpion = "Aggregation of a Total Activity across Minutes for Each Day")
+```
+* From the table, it hard to tell there is a trend exists. However, in the first 3 weeks, it seems like the subject has higher total activity during the weekend than weekdays. 
+
+```{r}
+#Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+accel %>% 
+  group_by(minute,day) %>% 
+  mutate(minute =as.numeric(minute)) %>% 
+  ggplot(aes(x = minute/60, y = activity)) + 
+  geom_point(aes(color = day), alpha = .5) + 
+   scale_x_continuous(
+    breaks = c(0, 3, 6, 9, 12, 15, 18, 21, 24),
+    labels = c("0hr", "3hr", "6hr", "9hr", "12hr", "15hr", "18hr", "21hr", "24hr")) + 
+  labs(
+    title = "24-hour Activity Time Courses for Each Day with one-minute interval",
+    x = "Hours",
+    y = "Activity",
+    caption = "single_panel plot")+
+  theme(plot.title = element_text(size=12))
+```
+Between 0hr (12am) to 6hr (6am), it is to be observed that the activity count of a 63 year-old male is the lowest across days. Around 7hr (7am), his activity count is relatively high on some Thursdays. Around 9hr (9am), his activity count is quite high on some Fridays. Around 12hr (12pm), his activity count is high on many Sundays. Between 16hr (4pm) and 17hr (5pm), his activity count is relatively high on a decent number of weekends. Between 20hr (8pm) and 22hr(10pm), his activity count is high across many days, especially on Friday followed by Saturday, Wednesday, Monday. 
+
+
+
