@@ -1,0 +1,26 @@
+---
+title: "p8105_fx2184_hw3"
+author: "Fei"
+date: "2022-10-16"
+output: github_document
+---
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(devtools)
+```
+```
+# problem1 
+
+```{r}
+#import the dataset
+library(p8105.datasets)
+instacart_df = instacart  %>% 
+        as_tibble(instacart)
+# giving illstrative examples of first 10 observations
+head(instacart_df, 10)
+```
+* the instacart dataset has `r nrow(instacart_df)` observations, and `r ncol(instacart_df)` variables, they are `r names(instacart_df)`. 
+* In total, there are `r instacart %>% select(product_id) %>% distinct %>% count` products found in `r instacart %>% select(user_id, order_id) %>% distinct %>% count` orders from `r instacart %>% select(user_id) %>% distinct %>% count` distinct users.
