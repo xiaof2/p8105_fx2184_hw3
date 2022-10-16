@@ -10,6 +10,8 @@ output: github_document
 library(tidyverse)
 library(readr)
 library(devtools)
+library(patchwork)
+library(ggridges)
 ```
 
 # problem1 
@@ -67,24 +69,11 @@ instacart_df %>%
 ```{r warning=FALSE}
 # Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
 instacart_df %>% 
-  filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
-  group_by(product_name,order_dow) %>% 
-  summarize( mean_hour_of_day = mean(order_hour_of_day)) %>% 
-  mutate(order_dow = recode(order_dow,
-                            "0" = "Monday",
-                            "1" = "Tuesday",
-                            "2" = "Wednesday", 
-                            "3" = "Thursday", 
-                            "4" = "Friday", 
-                            "5" = "Saturday", 
-                            "6" = "Sunday"
-  )) %>% 
-  pivot_wider(
-    names_from = order_dow,
-    values_from = mean_hour_of_day) %>% 
-  knitr::kable(
-    digits = 2,
-    caption = "Mean Hour of the Day")
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour = mean(order_hour_of_day)) %>%
+  spread(key = order_dow, value = mean_hour) %>%
+  knitr::kable(digits = 2)
 ```
 
 # problem 2 
@@ -183,7 +172,6 @@ ny_noaa %>%
 
 # Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
 ```{r}
-#label <- c('01'='January', '07'='July')
  ny_noaa %>% 
    filter(month == 1| month == 7) %>% 
    mutate(month = month.abb[month]) %>% 
@@ -192,7 +180,7 @@ ny_noaa %>%
    group_by(month,year,id) %>% 
    summarise(mean_month = mean(tmax)) %>% 
    ggplot(aes(
-     x=factor(year),
+     x=year,
      y=mean_month,
      color=year))+
    geom_point() +
@@ -209,7 +197,7 @@ ny_noaa %>%
 # Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option)
 
 ```{r}
-ny_noaa %>%
+plot1= ny_noaa %>%
         filter(!is.na(tmax),!is.na(tmin)) %>%
         ggplot(aes(x = tmin, y = tmax)) +
         geom_hex() + 
@@ -218,7 +206,26 @@ ny_noaa %>%
              title = "Max vs Min Temperature") +
         theme(plot.title = element_text(size = 12)) +
         theme(axis.title = element_text(size = 10)) +
-        theme(axis.text = element_text(size = 10)) +
-        theme(legend.text = element_text(size = 5))
-
+        theme(axis.text = element_text(size = 10)) 
 ```
+
+```{r}
+# make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+plot2 = ny_noaa %>% 
+  filter(!is.na(snow)) %>%
+  filter(snow>0,snow<100) %>%
+  ggplot(aes(x=snow, y=as.factor(year)))+
+  geom_density_ridges(alpha=0.8)+
+  ggtitle('The distribution of snowfall values between 0 and 100 by year')+
+  theme(legend.position = "bottom")
+```
+
+#patch work 
+```{r}
+plot1+plot2
+```
+
+* The hex plot shows that the high frequencies concentrate in the middle, which indicates that when the min temp within 0-20 degree Celcius and max temp within 0-25 degree celcius, we have the most of observations. 
+
+* The snowfall density curve indicates that the density curves overlap a lot, which indicates that the snowfall from 1981 to 2004 does not change greatly over the years. The most frequent snowfall value is 25mm in range 0 to 100mm. 
+
