@@ -92,7 +92,7 @@ instacart_df %>%
 Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
 
-```{r}
+```{r warning=FALSE}
 # tidy the dataset 
 accel<- read_csv("accel_data.csv") %>% 
   janitor::clean_names() %>% 
@@ -116,7 +116,7 @@ accel<- read_csv("accel_data.csv") %>%
 * Each observation represent a male subject's activity count per minute of each day during five weeks.
 
 #aggregate across minutes 
-```{r}
+```{r warning=FALSE}
 #aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 accel %>% 
   group_by(week,day) %>% 
@@ -151,3 +151,33 @@ accel %>%
 
 
 # problem 3 
+```{r warning=FALSE}
+library(p8105.datasets)
+data("ny_noaa")
+# clean and correct unit 
+
+ny_noaa = 
+  ny_noaa %>% 
+  as_tibble(ny_noaa) %>% 
+    janitor::clean_names()%>% 
+    mutate(ny_noaa, data = as.Date(date)) %>% 
+    mutate(year = as.integer(format(date, format = "%Y")),
+         month = as.integer(format(date, format = "%m")),
+         day = as.integer(format(date, format = "%d"))) %>% 
+    mutate(ny_noaa,tmax = as.numeric(tmax)/10) %>% 
+    mutate(ny_noaa,prcp = as.numeric(prcp)/10 ) %>% 
+    mutate(ny_noaa,tmin = as.numeric(tmin)/10 ) 
+```
+
+# the most commonly observed values of snowfall
+```{r}
+ny_noaa %>% 
+  group_by(snow) %>% 
+  distinct() %>% 
+  summarize(freq = n()) %>% 
+  arrange(desc(freq)) %>% 
+  head(3) %>% 
+  knitr::kable()
+```
+* The most commonly observed values of snowfall is `0` mm, which happened `2008508` times in the new york city. 
+* During the snowing day, the most frequent observed values of snowfall is `25`mm, which happened `31022` times. 
