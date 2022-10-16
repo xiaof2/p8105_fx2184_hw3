@@ -155,18 +155,17 @@ accel %>%
 library(p8105.datasets)
 data("ny_noaa")
 # clean and correct unit 
-
 ny_noaa = 
   ny_noaa %>% 
   as_tibble(ny_noaa) %>% 
     janitor::clean_names()%>% 
-    mutate(ny_noaa, data = as.Date(date)) %>% 
+    mutate(data = as.Date(date)) %>% 
     mutate(year = as.integer(format(date, format = "%Y")),
          month = as.integer(format(date, format = "%m")),
          day = as.integer(format(date, format = "%d"))) %>% 
-    mutate(ny_noaa,tmax = as.numeric(tmax)/10) %>% 
-    mutate(ny_noaa,prcp = as.numeric(prcp)/10 ) %>% 
-    mutate(ny_noaa,tmin = as.numeric(tmin)/10 ) 
+    mutate(tmax = as.numeric(tmax)/10) %>% 
+    mutate(prcp = as.numeric(prcp)/10 ) %>% 
+    mutate(tmin = as.numeric(tmin)/10 ) 
 ```
 
 # the most commonly observed values of snowfall
@@ -189,7 +188,7 @@ ny_noaa %>%
    filter(month == 1| month == 7) %>% 
    mutate(month = month.abb[month]) %>% 
    filter(!is.na(tmax)) %>% 
-   mutate(tmax = as.numeric(tmax)/10) %>% 
+   mutate(tmax = as.numeric(tmax)) %>% 
    group_by(month,year,id) %>% 
    summarise(mean_month = mean(tmax)) %>% 
    ggplot(aes(
@@ -206,3 +205,20 @@ ny_noaa %>%
 ```
 
 * The two-panel plot shows the average max temperature in January and in July in each station across years among 1981 to 2010. The July has an overall higher average max temperature than January, which is reasonable because new york city usually has distinctive four seasons. Outliers are exists both in January and July due to extreme weather. 
+
+# Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option)
+
+```{r}
+ny_noaa %>%
+        filter(!is.na(tmax),!is.na(tmin)) %>%
+        ggplot(aes(x = tmin, y = tmax)) +
+        geom_hex() + 
+        labs(x = "Minimum Temperature (C)", 
+             y = "Maximum Temperature (C)",
+             title = "Max vs Min Temperature") +
+        theme(plot.title = element_text(size = 12)) +
+        theme(axis.title = element_text(size = 10)) +
+        theme(axis.text = element_text(size = 10)) +
+        theme(legend.text = element_text(size = 5))
+
+```
